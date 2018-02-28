@@ -1,26 +1,43 @@
-#include <stdio.h>
+kö#include <stdio.h>
 #include <math.h>
 #include <stdlib.h>
 #include <unistd.h>
 #include <string.h>
 #include <ctype.h>
 #include <values.h>
+#include <limits.h>
 
 #define MAXOFFSET 1025
+#define NAN FLT_MIN
 
-typedef struct offsetstate_s {
-  char *linebuf[MAXOFFSET];
+typedef struct column_s {
+  float cbuf[MAXOFFSET];
   int offset;
   int index;
-} *offsetstate;
+  int pastHalfway;
+} *column;
 
-offsetstate initOffset(int offset) {
-  offsetstate r = (offsetstate)calloc(sizeof(struct offsetstate_s),1);
+column initColumn(int offset) {
+  column r = (column)calloc(sizeof(struct column_s),1);
   r->offset = offset;
+  r->index = 0;
+  r->pastHalfway = 0;
 }
 
-void offsetprint(offsetstate state, char *s1, char *s2) {
-  
+float getMidVal(column state) {
+  if (!state->pastHalfway) {
+    return NAN;
+  } else {
+    return state->cbuf[(state->index + state->offset / 2) % (state->offset)];
+  }
+}
+
+void addValue(column state, float v) {
+  state->cbuf[state->index] = v;
+  state->index = (state->index + 1) % state->offset;
+  if (state->index >= state->offset/2) {
+    state->pastHalfway = 1;
+  }
 }
 
 char **offsetbuf=NULL;
